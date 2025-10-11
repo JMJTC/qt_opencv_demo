@@ -36,6 +36,11 @@ VideoWidget::VideoWidget(QWidget *parent) : QLabel(parent), timer(nullptr)
 
 VideoWidget::~VideoWidget()
 {
+    if (timer)
+    {
+        timer->stop();
+        delete timer;
+    }
     cap.release();
 }
 

@@ -16,8 +16,8 @@ class VideoWidget : public QLabel
     void updateFrame();
 
   private:
-    cv::VideoCapture cap;
-    QTimer *timer;
+    cv::VideoCapture cap{};
+    QTimer *timer{};
 };
 
 #endif // _QTOPENCV_DEMO_VIDEOWIDGET_H_
