@@ -22,9 +22,13 @@ find_package(OpenCV 4.0 REQUIRED COMPONENTS core imgproc highgui)
 set(SOURCES
   src/main.cpp
   src/videowidget.cpp
+  src/imageprocessor.cpp
+  src/mainwindow.cpp
 )
 set(HEADERS
   include/videowidget.h
+  include/imageprocessor.h
+  include/mainwindow.h
 )
 
 # 输出目录配置
