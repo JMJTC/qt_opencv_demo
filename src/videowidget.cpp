@@ -1,8 +1,11 @@
-#include "../include/videowidget.h"
+#include "videowidget.h"
+#include <QImage>
+#include <QPixmap>
+#include <iostream>
 
-VideoWidget::VideoWidget(QWidget *parent = nullptr) : QLabel(parent)
+VideoWidget::VideoWidget(QWidget *parent) : QLabel(parent), timer(nullptr)
 {
-    // 1. 先尝试打开摄像头
+    // 1. 尝试打开摄像头
     if (cap.open(0))
     {
         std::cout << "✅ 摄像头打开成功" << std::endl;
@@ -10,9 +13,7 @@ VideoWidget::VideoWidget(QWidget *parent = nullptr) : QLabel(parent)
     else
     {
         std::cout << "⚠️ 摄像头打开失败，尝试播放本地视频..." << std::endl;
-
-        // 2. 回退到本地视频
-        std::string videoPath = "assets/demo.mp4";
+        std::string videoPath = "../assets/demo.mp4";
         if (!cap.open(videoPath))
         {
             std::cerr << "❌ 无法打开摄像头或视频文件：" << videoPath << std::endl;
@@ -24,7 +25,7 @@ VideoWidget::VideoWidget(QWidget *parent = nullptr) : QLabel(parent)
         }
     }
 
-    // 固定大小
+    // 固定窗口大小
     this->setFixedSize(640, 480);
 
     // 定时器刷新
@@ -38,16 +39,10 @@ VideoWidget::~VideoWidget()
     cap.release();
 }
 
-/**
- * @brief 更新视频帧的函数
- * 该函数从视频捕获设备中获取新的一帧，进行处理并显示在界面上
- */
 void VideoWidget::updateFrame()
 {
-    cv::Mat frame; // 用于存储从视频中捕获的帧
-    // 从视频捕获对象中读取下一帧
+    cv::Mat frame;
     cap >> frame;
-    // 检查帧是否为空
     if (frame.empty())
     {
         // 如果是视频播放完了，重头开始
