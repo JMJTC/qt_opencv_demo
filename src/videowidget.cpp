@@ -13,7 +13,7 @@ VideoWidget::VideoWidget(QWidget *parent) : QLabel(parent), timer(nullptr)
     else
     {
         std::cout << "⚠️ 摄像头打开失败，尝试播放本地视频..." << std::endl;
-        std::string videoPath = "../assets/demo.mp4";
+        std::string videoPath = "./assets/demo.mp4";
         if (!cap.open(videoPath))
         {
             std::cerr << "❌ 无法打开摄像头或视频文件：" << videoPath << std::endl;

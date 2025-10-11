@@ -38,11 +38,33 @@ foreach(CONFIG ${CMAKE_CONFIGURATION_TYPES})
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CONFIG_UPPER} ${CMAKE_BINARY_DIR}/lib/${CONFIG})
 endforeach()
 
+# 定义资源目录（相对于 CMakeLists.txt 的路径）
+set(ASSETS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/assets)
+# 目标目录（与可执行文件同目录）
+set(DEST_ASSETS_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets)
+
+# 复制 assets 目录到输出目录（每次构建时检查更新）
+add_custom_command(
+  OUTPUT ${DEST_ASSETS_DIR}
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${ASSETS_DIR} ${DEST_ASSETS_DIR}
+  MAIN_DEPENDENCY ${ASSETS_DIR}  # 资源目录变化时重新复制
+  COMMENT "Copying assets to output directory..."
+)
+
+# 创建一个目标，确保复制操作在编译前执行
+add_custom_target(
+  copy_assets ALL
+  DEPENDS ${DEST_ASSETS_DIR}
+)
+
 # 生成可执行文件
 add_executable(qt_opencv_demo
   ${SOURCES}
   ${HEADERS}
 )
+
+# 让可执行文件依赖于资源复制目标（确保先复制再编译）
+add_dependencies(qt_opencv_demo copy_assets)
 
 # 目标属性配置（Windows 隐藏控制台）
 if(WIN32)
