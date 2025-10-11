@@ -1,22 +1,70 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 project(QtOpenCVDemo)
 
+# C++ 标准配置
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)  # 生成编译命令数据库
-set(CMAKE_AUTOMOC ON)   # 自动处理 Qt MOC
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# 生成编译命令数据库（供 IDE 索引）
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Qt 自动处理（MOC/UIC/RCC）
+set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
-find_package(OpenCV REQUIRED)
+# 查找依赖（指定最低版本和必要组件）
+find_package(Qt5 5.12 COMPONENTS Widgets REQUIRED)
+find_package(OpenCV 4.0 REQUIRED COMPONENTS core imgproc highgui)
 
-include_directories(${OpenCV_INCLUDE_DIRS})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-add_executable(qt_opencv_demo
-    src/main.cpp
-    include/videowidget.h
-    src/videowidget.cpp
+# 源文件管理
+set(SOURCES
+  src/main.cpp
+  src/videowidget.cpp
+)
+set(HEADERS
+  include/videowidget.h
 )
 
-target_link_libraries(qt_opencv_demo Qt5::Widgets ${OpenCV_LIBS})
+# 输出目录配置
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+foreach(CONFIG ${CMAKE_CONFIGURATION_TYPES})
+  string(TOUPPER ${CONFIG} CONFIG_UPPER)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONFIG_UPPER} ${CMAKE_BINARY_DIR}/bin/${CONFIG})
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CONFIG_UPPER} ${CMAKE_BINARY_DIR}/lib/${CONFIG})
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CONFIG_UPPER} ${CMAKE_BINARY_DIR}/lib/${CONFIG})
+endforeach()
+
+# 生成可执行文件
+add_executable(qt_opencv_demo
+  ${SOURCES}
+  ${HEADERS}
+)
+
+# 目标属性配置（Windows 隐藏控制台）
+if(WIN32)
+  set_target_properties(qt_opencv_demo PROPERTIES WIN32_EXECUTABLE ON)
+endif()
+
+# 包含目录（目标专属）
+target_include_directories(qt_opencv_demo
+  PRIVATE
+    ${OpenCV_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+# 链接依赖
+target_link_libraries(qt_opencv_demo
+  PRIVATE
+    Qt5::Widgets
+    ${OpenCV_LIBS}
+)
+
+# 编译警告
+target_compile_options(qt_opencv_demo PRIVATE
+  $<$<CXX_COMPILER_ID:MSVC>:/W4>
+  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
+)
