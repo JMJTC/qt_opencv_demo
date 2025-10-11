@@ -1,9 +1,14 @@
 #include "mainwindow.h"
 
+/**
+ * MainWindow类的构造函数，初始化主窗口及其UI组件
+ * @param parent 父窗口对象，默认为nullptr
+ */
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), imageLabel(new QLabel(this)), filterCombo(new QComboBox(this)),
       openButton(new QPushButton("打开图片", this)), currentFilter(FilterType::None)
 {
+    // 创建中央窗口和主布局
     QWidget *central = new QWidget(this);
     QVBoxLayout *mainLayout = new QVBoxLayout(central);
 
@@ -21,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
     mainLayout->addWidget(imageLabel, 1);
 
     setCentralWidget(central);
-    // setWindowTitle(QString::fromUtf8("Qt + OpenCV 基础图像处理 Demo"));
+    setWindowTitle(QString::fromUtf8("Qt + OpenCV 基础图像处理 Demo"));
     resize(800, 600);
 
     connect(openButton, &QPushButton::clicked, this, &MainWindow::onOpenImage);
