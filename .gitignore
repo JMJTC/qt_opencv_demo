@@ -1,0 +1,64 @@
+/**************************** CodeGeeX Inline Diff ****************************/
+# CMake 构建目录
+build/
+cmake-build-*/
+
+# CMake生成的文件
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# 可执行文件
+*.exe
+*.out
+*.app
+
+# 库文件
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+
+# IDE 文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 依赖目录
+vendor/
+third_party/
+external/
+
+# 临时文件
+*.tmp
+*.log
+*.bak
+
+# 测试覆盖率报告
+coverage/
+*.gcov
+
+# 调试文件
+*.dSYM/
+*.pdb
+
+# 包管理器文件
+package-lock.json
+yarn.lock
+
+# 环境配置文件（如果需要，可以取消注释）
+# .env
+# .env.local
+# .env.development
+# .env.production
+/******************** 9a55c226-7d72-47d3-9eaa-5733d30b738b ********************/
