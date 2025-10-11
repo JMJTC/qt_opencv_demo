@@ -24,11 +24,13 @@ set(SOURCES
   src/videowidget.cpp
   src/imageprocessor.cpp
   src/mainwindow.cpp
+  src/videoplayer.cpp
 )
 set(HEADERS
   include/videowidget.h
   include/imageprocessor.h
   include/mainwindow.h
+  include/videoplayer.h
 )
 
 # 输出目录配置

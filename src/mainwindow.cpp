@@ -1,35 +1,42 @@
 #include "mainwindow.h"
+#include <QDebug>
+#include <QFileDialog>
 
-/**
- * MainWindow类的构造函数，初始化主窗口及其UI组件
- * @param parent 父窗口对象，默认为nullptr
- */
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), imageLabel(new QLabel(this)), filterCombo(new QComboBox(this)),
-      openButton(new QPushButton("打开图片", this)), currentFilter(FilterType::None)
+    : QMainWindow(parent), player(new VideoPlayer(this)), displayLabel(new QLabel(this)),
+      openButton(new QPushButton("打开", this)), playButton(new QPushButton("播放", this)),
+      filterCombo(new QComboBox(this)), slider(new QSlider(Qt::Horizontal, this)), currentMediaType(MediaType::None),
+      currentFilter(FilterType::None), isPlaying(false)
 {
-    // 创建中央窗口和主布局
     QWidget *central = new QWidget(this);
     QVBoxLayout *mainLayout = new QVBoxLayout(central);
 
-    // 顶部工具栏
-    QHBoxLayout *toolbarLayout = new QHBoxLayout();
-    toolbarLayout->addWidget(openButton);
-    toolbarLayout->addWidget(filterCombo);
+    QHBoxLayout *toolbar = new QHBoxLayout();
+    toolbar->addWidget(openButton);
+    toolbar->addWidget(playButton);
+    toolbar->addWidget(filterCombo);
 
     filterCombo->addItem("无滤镜");
     filterCombo->addItem("灰度");
     filterCombo->addItem("边缘检测");
     filterCombo->addItem("高斯模糊");
 
-    mainLayout->addLayout(toolbarLayout);
-    mainLayout->addWidget(imageLabel, 1);
+    mainLayout->addLayout(toolbar);
+    mainLayout->addWidget(displayLabel);
+    mainLayout->addWidget(slider);
 
     setCentralWidget(central);
-    setWindowTitle(QString::fromUtf8("Qt + OpenCV 基础图像处理 Demo"));
+    setWindowTitle("Qt + OpenCV 图像/视频滤镜 Demo");
     resize(800, 600);
 
-    connect(openButton, &QPushButton::clicked, this, &MainWindow::onOpenImage);
+    playButton->setEnabled(false);
+    slider->setEnabled(false);
+
+    connect(openButton, &QPushButton::clicked, this, &MainWindow::openMedia);
+    connect(playButton, &QPushButton::clicked, this, &MainWindow::playPause);
+    connect(player, &VideoPlayer::frameReady, this, &MainWindow::onFrameReady);
+    connect(player, &VideoPlayer::positionChanged, this, &MainWindow::onPositionChanged);
+    connect(slider, &QSlider::sliderReleased, this, &MainWindow::onSliderReleased);
     connect(filterCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onFilterChanged);
 }
 
@@ -37,18 +44,85 @@ MainWindow::~MainWindow()
 {
 }
 
-void MainWindow::onOpenImage()
+void MainWindow::openMedia()
 {
-    QString filePath = QFileDialog::getOpenFileName(this, "选择图片", "", "Images (*.png *.jpg *.jpeg *.bmp)");
-    if (!filePath.isEmpty())
+    QString path =
+        QFileDialog::getOpenFileName(this, "选择文件", "", "Images and Videos (*.png *.jpg *.jpeg *.bmp *.mp4 *.avi)");
+    if (path.isEmpty())
+        return;
+
+    // 停止视频播放
+    player->stop();
+    isPlaying = false;
+    playButton->setText("播放");
+
+    // 尝试先加载图片
+    cv::Mat img = cv::imread(path.toStdString());
+    if (!img.empty())
     {
-        originalImage = cv::imread(filePath.toStdString());
-        cv::cvtColor(originalImage, originalImage, cv::COLOR_BGR2RGB);
-        processedImage = originalImage.clone();
-        currentFilter = FilterType::None;
-        filterCombo->setCurrentIndex(0);
-        updateDisplay();
+        currentMediaType = MediaType::Image;
+        currentImage = img;
+        displayImage(ImageProcessor::applyFilter(img, currentFilter));
+
+        playButton->setEnabled(false);
+        slider->setEnabled(false);
+        return;
     }
+
+    // 否则尝试作为视频
+    if (player->loadVideo(path))
+    {
+        currentMediaType = MediaType::Video;
+        playButton->setEnabled(true);
+        slider->setEnabled(true);
+    }
+    else
+    {
+        currentMediaType = MediaType::None;
+        qWarning() << "无法加载媒体文件";
+    }
+}
+
+void MainWindow::playPause()
+{
+    if (currentMediaType != MediaType::Video)
+        return;
+    if (isPlaying)
+    {
+        player->pause();
+        playButton->setText("播放");
+    }
+    else
+    {
+        player->play();
+        playButton->setText("暂停");
+    }
+    isPlaying = !isPlaying;
+}
+
+void MainWindow::onFrameReady(const QImage &frame)
+{
+    if (currentMediaType != MediaType::Video)
+        return;
+    displayLabel->setPixmap(
+        QPixmap::fromImage(frame).scaled(displayLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+}
+
+void MainWindow::onPositionChanged(double pos)
+{
+    if (currentMediaType != MediaType::Video)
+        return;
+    slider->blockSignals(true);
+    slider->setValue(static_cast<int>(pos * 1000));
+    slider->blockSignals(false);
+}
+
+void MainWindow::onSliderReleased()
+{
+    if (currentMediaType != MediaType::Video)
+        return;
+    double pos = slider->value() / 1000.0;
+    player->setPosition(pos);
 }
 
 void MainWindow::onFilterChanged(int index)
@@ -66,23 +140,25 @@ void MainWindow::onFilterChanged(int index)
         break;
     default:
         currentFilter = FilterType::None;
-        break;
     }
 
-    if (!originalImage.empty())
+    if (currentMediaType == MediaType::Image && !currentImage.empty())
     {
-        processedImage = ImageProcessor::applyFilter(originalImage, currentFilter);
-        updateDisplay();
+        displayImage(ImageProcessor::applyFilter(currentImage, currentFilter));
+    }
+    else if (currentMediaType == MediaType::Video)
+    {
+        player->setFilter(currentFilter);
     }
 }
 
-void MainWindow::updateDisplay()
+void MainWindow::displayImage(const cv::Mat &img)
 {
-    if (processedImage.empty())
+    if (img.empty())
         return;
-
-    QImage qimg(processedImage.data, processedImage.cols, processedImage.rows, processedImage.step,
-                QImage::Format_RGB888);
-    imageLabel->setPixmap(
-        QPixmap::fromImage(qimg).scaled(imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    cv::Mat rgb;
+    cv::cvtColor(img, rgb, cv::COLOR_BGR2RGB);
+    QImage qimg(rgb.data, rgb.cols, rgb.rows, rgb.step, QImage::Format_RGB888);
+    displayLabel->setPixmap(
+        QPixmap::fromImage(qimg).scaled(displayLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 }
