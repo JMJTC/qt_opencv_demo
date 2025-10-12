@@ -9,6 +9,20 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # 生成编译命令数据库（供 IDE 索引）
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# 设置默认构建类型（若未指定，默认 Debug）
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
+
+# 定义 Debug 模式选项
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -Wall -DDEBUG")
+
+# 定义 Release 模式选项
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 -DNDEBUG -Wall")
+
+# 可选：明确指定支持的构建类型（避免用户输入无效类型）
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
+
 # Qt 自动处理（MOC/UIC/RCC）
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
