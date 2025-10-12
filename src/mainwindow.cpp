@@ -31,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     playButton->setEnabled(false);
     slider->setEnabled(false);
+    slider->setRange(0, 1000); // 设置滑块的范围为0到1000
 
     connect(openButton, &QPushButton::clicked, this, &MainWindow::openMedia);
     connect(playButton, &QPushButton::clicked, this, &MainWindow::playPause);
