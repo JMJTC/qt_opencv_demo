@@ -70,10 +70,10 @@ void MainWindow::openMedia()
         return;
     }
 
+    currentMediaType = MediaType::Video;
     // 否则尝试作为视频
     if (player->loadVideo(path))
     {
-        currentMediaType = MediaType::Video;
         playButton->setEnabled(true);
         slider->setEnabled(true);
     }
