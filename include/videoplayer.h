@@ -30,11 +30,11 @@ class VideoPlayer : public QObject
     void processFrame();
 
   private:
-    cv::VideoCapture cap{};
-    QTimer *timer{};
-    QMutex mutex{};
+    cv::VideoCapture m_cap{};
+    QTimer *m_pTimer{};
+    QMutex m_mutex{};
     FilterType m_currentFilter{};
-    int fps{};
+    int m_fps{};
     bool m_isPlaying{};
 };
 
