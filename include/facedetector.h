@@ -30,7 +30,7 @@ class FaceDetector
     std::vector<cv::Rect> detect(const cv::Mat &frame);
 
   private:
-    cv::CascadeClassifier faceCascade_; ///< OpenCV的人脸分类器对象
-    bool loaded_;                       ///< 标记模型是否成功加载
+    cv::CascadeClassifier m_faceCascade{}; ///< OpenCV的人脸分类器对象
+    bool m_loaded{false};                  ///< 标记模型是否成功加载
 };
 #endif // _QTOPENCV_DEMO_FACEDETECTOR_H_
