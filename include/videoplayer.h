@@ -33,9 +33,9 @@ class VideoPlayer : public QObject
     cv::VideoCapture cap{};
     QTimer *timer{};
     QMutex mutex{};
-    FilterType currentFilter{};
+    FilterType m_currentFilter{};
     int fps{};
-    bool isPlaying{};
+    bool m_isPlaying{};
 };
 
 #endif // _QTOPENCV_DEMO_VIDEOPLAYER_H_

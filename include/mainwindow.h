@@ -39,17 +39,17 @@ class MainWindow : public QMainWindow
   private:
     void displayImage(const cv::Mat &img);
 
-    VideoPlayer *player = nullptr;
-    QLabel *displayLabel = nullptr;
-    QPushButton *openButton = nullptr;
-    QPushButton *playButton = nullptr;
-    QComboBox *filterCombo = nullptr;
-    QSlider *slider = nullptr;
+    VideoPlayer *m_pPlayer = nullptr;
+    QLabel *m_pDisplayLabel = nullptr;
+    QPushButton *m_pOpenButton = nullptr;
+    QPushButton *m_pPlayButton = nullptr;
+    QComboBox *m_pFilterCombo = nullptr;
+    QSlider *m_pSlider = nullptr;
 
-    MediaType currentMediaType{};
-    cv::Mat currentImage{};
-    FilterType currentFilter{};
-    bool isPlaying = false;
+    MediaType m_currentMediaType{};
+    cv::Mat m_currentImage{};
+    FilterType m_currentFilter{};
+    bool m_isPlaying = false;
 };
 
 #endif // _QTOPENCV_DEMO_MAINWINDOW_H_

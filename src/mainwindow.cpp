@@ -3,42 +3,42 @@
 #include <QFileDialog>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), player(new VideoPlayer(this)), displayLabel(new QLabel(this)),
-      openButton(new QPushButton("打开", this)), playButton(new QPushButton("播放", this)),
-      filterCombo(new QComboBox(this)), slider(new QSlider(Qt::Horizontal, this)), currentMediaType(MediaType::None),
-      currentFilter(FilterType::None), isPlaying(false)
+    : QMainWindow(parent), m_pPlayer(new VideoPlayer(this)), m_pDisplayLabel(new QLabel(this)),
+      m_pOpenButton(new QPushButton("打开", this)), m_pPlayButton(new QPushButton("播放", this)),
+      m_pFilterCombo(new QComboBox(this)), m_pSlider(new QSlider(Qt::Horizontal, this)),
+      m_currentMediaType(MediaType::None), m_currentFilter(FilterType::None), m_isPlaying(false)
 {
     QWidget *central = new QWidget(this);
     QVBoxLayout *mainLayout = new QVBoxLayout(central);
 
     QHBoxLayout *toolbar = new QHBoxLayout();
-    toolbar->addWidget(openButton);
-    toolbar->addWidget(playButton);
-    toolbar->addWidget(filterCombo);
+    toolbar->addWidget(m_pOpenButton);
+    toolbar->addWidget(m_pPlayButton);
+    toolbar->addWidget(m_pFilterCombo);
 
-    filterCombo->addItem("无滤镜");
-    filterCombo->addItem("灰度");
-    filterCombo->addItem("边缘检测");
-    filterCombo->addItem("高斯模糊");
+    m_pFilterCombo->addItem("无滤镜");
+    m_pFilterCombo->addItem("灰度");
+    m_pFilterCombo->addItem("边缘检测");
+    m_pFilterCombo->addItem("高斯模糊");
 
     mainLayout->addLayout(toolbar);
-    mainLayout->addWidget(displayLabel);
-    mainLayout->addWidget(slider);
+    mainLayout->addWidget(m_pDisplayLabel);
+    mainLayout->addWidget(m_pSlider);
 
     setCentralWidget(central);
     setWindowTitle("Qt + OpenCV 图像/视频滤镜 Demo");
     resize(800, 600);
 
-    playButton->setEnabled(false);
-    slider->setEnabled(false);
-    slider->setRange(0, 1000); // 设置滑块的范围为0到1000
+    m_pPlayButton->setEnabled(false);
+    m_pSlider->setEnabled(false);
+    m_pSlider->setRange(0, 1000); // 设置滑块的范围为0到1000
 
-    connect(openButton, &QPushButton::clicked, this, &MainWindow::openMedia);
-    connect(playButton, &QPushButton::clicked, this, &MainWindow::playPause);
-    connect(player, &VideoPlayer::frameReady, this, &MainWindow::onFrameReady);
-    connect(player, &VideoPlayer::positionChanged, this, &MainWindow::onPositionChanged);
-    connect(slider, &QSlider::sliderReleased, this, &MainWindow::onSliderReleased);
-    connect(filterCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onFilterChanged);
+    connect(m_pOpenButton, &QPushButton::clicked, this, &MainWindow::openMedia);
+    connect(m_pPlayButton, &QPushButton::clicked, this, &MainWindow::playPause);
+    connect(m_pPlayer, &VideoPlayer::frameReady, this, &MainWindow::onFrameReady);
+    connect(m_pPlayer, &VideoPlayer::positionChanged, this, &MainWindow::onPositionChanged);
+    connect(m_pSlider, &QSlider::sliderReleased, this, &MainWindow::onSliderReleased);
+    connect(m_pFilterCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onFilterChanged);
 }
 
 MainWindow::~MainWindow()
@@ -53,77 +53,77 @@ void MainWindow::openMedia()
         return;
 
     // 停止视频播放
-    player->stop();
-    isPlaying = false;
-    playButton->setText("播放");
+    m_pPlayer->stop();
+    m_isPlaying = false;
+    m_pPlayButton->setText("播放");
 
     // 尝试先加载图片
     cv::Mat img = cv::imread(path.toStdString());
     if (!img.empty())
     {
-        currentMediaType = MediaType::Image;
-        currentImage = img;
-        displayImage(ImageProcessor::applyFilter(img, currentFilter));
+        m_currentMediaType = MediaType::Image;
+        m_currentImage = img;
+        displayImage(ImageProcessor::applyFilter(img, m_currentFilter));
 
-        playButton->setEnabled(false);
-        slider->setEnabled(false);
+        m_pPlayButton->setEnabled(false);
+        m_pSlider->setEnabled(false);
         return;
     }
 
-    currentMediaType = MediaType::Video;
+    m_currentMediaType = MediaType::Video;
     // 否则尝试作为视频
-    if (player->loadVideo(path))
+    if (m_pPlayer->loadVideo(path))
     {
-        playButton->setEnabled(true);
-        slider->setEnabled(true);
+        m_pPlayButton->setEnabled(true);
+        m_pSlider->setEnabled(true);
     }
     else
     {
-        currentMediaType = MediaType::None;
+        m_currentMediaType = MediaType::None;
         qWarning() << "无法加载媒体文件";
     }
 }
 
 void MainWindow::playPause()
 {
-    if (currentMediaType != MediaType::Video)
+    if (m_currentMediaType != MediaType::Video)
         return;
-    if (isPlaying)
+    if (m_isPlaying)
     {
-        player->pause();
-        playButton->setText("播放");
+        m_pPlayer->pause();
+        m_pPlayButton->setText("播放");
     }
     else
     {
-        player->play();
-        playButton->setText("暂停");
+        m_pPlayer->play();
+        m_pPlayButton->setText("暂停");
     }
-    isPlaying = !isPlaying;
+    m_isPlaying = !m_isPlaying;
 }
 
 void MainWindow::onFrameReady(const QImage &frame)
 {
-    if (currentMediaType != MediaType::Video)
+    if (m_currentMediaType != MediaType::Video)
         return;
-    displayLabel->setPixmap(
-        QPixmap::fromImage(frame).scaled(displayLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    m_pDisplayLabel->setPixmap(
+        QPixmap::fromImage(frame).scaled(m_pDisplayLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 }
 
 void MainWindow::onPositionChanged(double pos)
 {
-    if (currentMediaType != MediaType::Video)
+    if (m_currentMediaType != MediaType::Video)
         return;
-    slider->blockSignals(true);
-    slider->setValue(static_cast<int>(pos * 1000));
-    slider->blockSignals(false);
+    m_pSlider->blockSignals(true);
+    m_pSlider->setValue(static_cast<int>(pos * 1000));
+    m_pSlider->blockSignals(false);
 }
 
 void MainWindow::onSliderReleased()
 {
-    if (currentMediaType != MediaType::Video)
+    if (m_currentMediaType != MediaType::Video)
         return;
-    double pos = slider->value() / 1000.0;
-    player->setPosition(pos);
+    double pos = m_pSlider->value() / 1000.0;
+    m_pPlayer->setPosition(pos);
 }
 
 void MainWindow::onFilterChanged(int index)
@@ -131,25 +131,25 @@ void MainWindow::onFilterChanged(int index)
     switch (index)
     {
     case 1:
-        currentFilter = FilterType::Grayscale;
+        m_currentFilter = FilterType::Grayscale;
         break;
     case 2:
-        currentFilter = FilterType::Edge;
+        m_currentFilter = FilterType::Edge;
         break;
     case 3:
-        currentFilter = FilterType::Blur;
+        m_currentFilter = FilterType::Blur;
         break;
     default:
-        currentFilter = FilterType::None;
+        m_currentFilter = FilterType::None;
     }
 
-    if (currentMediaType == MediaType::Image && !currentImage.empty())
+    if (m_currentMediaType == MediaType::Image && !m_currentImage.empty())
     {
-        displayImage(ImageProcessor::applyFilter(currentImage, currentFilter));
+        displayImage(ImageProcessor::applyFilter(m_currentImage, m_currentFilter));
     }
-    else if (currentMediaType == MediaType::Video)
+    else if (m_currentMediaType == MediaType::Video)
     {
-        player->setFilter(currentFilter);
+        m_pPlayer->setFilter(m_currentFilter);
     }
 }
 
@@ -160,6 +160,6 @@ void MainWindow::displayImage(const cv::Mat &img)
     cv::Mat rgb;
     cv::cvtColor(img, rgb, cv::COLOR_BGR2RGB);
     QImage qimg(rgb.data, rgb.cols, rgb.rows, rgb.step, QImage::Format_RGB888);
-    displayLabel->setPixmap(
-        QPixmap::fromImage(qimg).scaled(displayLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    m_pDisplayLabel->setPixmap(
+        QPixmap::fromImage(qimg).scaled(m_pDisplayLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 }

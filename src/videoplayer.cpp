@@ -2,7 +2,7 @@
 #include <QDebug>
 
 VideoPlayer::VideoPlayer(QObject *parent)
-    : QObject(parent), timer(new QTimer(this)), currentFilter(FilterType::None), fps(30), isPlaying(false)
+    : QObject(parent), timer(new QTimer(this)), m_currentFilter(FilterType::None), fps(30), m_isPlaying(false)
 {
     connect(timer, &QTimer::timeout, this, &VideoPlayer::processFrame);
 }
@@ -37,13 +37,13 @@ void VideoPlayer::play()
 {
     if (!cap.isOpened())
         return;
-    isPlaying = true;
+    m_isPlaying = true;
     timer->start(1000 / fps);
 }
 
 void VideoPlayer::pause()
 {
-    isPlaying = false;
+    m_isPlaying = false;
     timer->stop();
 }
 
@@ -58,7 +58,7 @@ void VideoPlayer::stop()
 void VideoPlayer::setFilter(FilterType type)
 {
     QMutexLocker locker(&mutex);
-    currentFilter = type;
+    m_currentFilter = type;
 }
 
 void VideoPlayer::setPosition(double pos)
@@ -72,7 +72,7 @@ void VideoPlayer::setPosition(double pos)
     cv::Mat frameMat;
     if (cap.read(frameMat))
     {
-        frameMat = ImageProcessor::applyFilter(frameMat, currentFilter);
+        frameMat = ImageProcessor::applyFilter(frameMat, m_currentFilter);
         cv::cvtColor(frameMat, frameMat, cv::COLOR_BGR2RGB);
         QImage img(frameMat.data, frameMat.cols, frameMat.rows, frameMat.step, QImage::Format_RGB888);
         emit frameReady(img.copy());
@@ -85,7 +85,7 @@ void VideoPlayer::setPosition(double pos)
 
 void VideoPlayer::processFrame()
 {
-    if (!isPlaying || !cap.isOpened())
+    if (!m_isPlaying || !cap.isOpened())
         return;
 
     cv::Mat frame;
@@ -97,7 +97,7 @@ void VideoPlayer::processFrame()
             cap.set(cv::CAP_PROP_POS_FRAMES, 0);
             if (cap.read(frame))
             {
-                frame = ImageProcessor::applyFilter(frame, currentFilter);
+                frame = ImageProcessor::applyFilter(frame, m_currentFilter);
                 cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
                 QImage img(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888);
                 emit frameReady(img.copy());
@@ -107,7 +107,7 @@ void VideoPlayer::processFrame()
             pause();
             return;
         }
-        frame = ImageProcessor::applyFilter(frame, currentFilter);
+        frame = ImageProcessor::applyFilter(frame, m_currentFilter);
     }
 
     cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
