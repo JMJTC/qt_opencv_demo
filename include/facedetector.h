@@ -28,9 +28,33 @@ class FaceDetector
      * @return 返回检测到的人脸矩形区域列表
      */
     std::vector<cv::Rect> detect(const cv::Mat &frame);
+    
+    /**
+     * @brief 设置检测参数
+     * @param scaleFactor 图像缩放因子
+     * @param minNeighbors 最小邻居数
+     * @param minSize 最小人脸尺寸
+     * @param maxSize 最大人脸尺寸
+     */
+    void setDetectionParams(double scaleFactor, int minNeighbors, 
+                           const cv::Size& minSize, const cv::Size& maxSize);
+    
+    /**
+     * @brief 获取当前检测参数
+     */
+    double getScaleFactor() const { return m_scaleFactor; }
+    int getMinNeighbors() const { return m_minNeighbors; }
+    cv::Size getMinSize() const { return m_minSize; }
+    cv::Size getMaxSize() const { return m_maxSize; }
 
   private:
     cv::CascadeClassifier m_faceCascade{}; ///< OpenCV的人脸分类器对象
     bool m_loaded{false};                  ///< 标记模型是否成功加载
+    
+    // 检测参数
+    double m_scaleFactor{1.1};            ///< 图像缩放因子
+    int m_minNeighbors{3};                ///< 最小邻居数
+    cv::Size m_minSize{30, 30};           ///< 最小人脸尺寸
+    cv::Size m_maxSize{300, 300};         ///< 最大人脸尺寸
 };
 #endif // _QTOPENCV_DEMO_FACEDETECTOR_H_

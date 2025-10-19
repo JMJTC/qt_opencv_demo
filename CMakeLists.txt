@@ -30,7 +30,7 @@ set(CMAKE_AUTOUIC ON)
 
 # 查找依赖（指定最低版本和必要组件）
 find_package(Qt5 5.12 COMPONENTS Widgets REQUIRED)
-find_package(OpenCV 4.0 REQUIRED COMPONENTS core imgproc highgui)
+find_package(OpenCV 4.0 REQUIRED COMPONENTS core imgproc highgui objdetect)
 
 # 源文件管理
 set(SOURCES
@@ -39,12 +39,14 @@ set(SOURCES
   src/imageprocessor.cpp
   src/mainwindow.cpp
   src/videoplayer.cpp
+  src/facedetector.cpp
 )
 set(HEADERS
   include/videowidget.h
   include/imageprocessor.h
   include/mainwindow.h
   include/videoplayer.h
+  include/facedetector.h
 )
 
 # 输出目录配置
@@ -60,8 +62,10 @@ endforeach()
 
 # 定义资源目录（相对于 CMakeLists.txt 的路径）
 set(ASSETS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/assets)
+set(RESOURCES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources)
 # 目标目录（与可执行文件同目录）
 set(DEST_ASSETS_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets)
+set(DEST_RESOURCES_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources)
 
 # 复制 assets 目录到输出目录（每次构建时检查更新）
 add_custom_command(
@@ -71,10 +75,18 @@ add_custom_command(
   COMMENT "Copying assets to output directory..."
 )
 
+# 复制 resources 目录到输出目录（每次构建时检查更新）
+add_custom_command(
+  OUTPUT ${DEST_RESOURCES_DIR}
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${RESOURCES_DIR} ${DEST_RESOURCES_DIR}
+  MAIN_DEPENDENCY ${RESOURCES_DIR}  # 资源目录变化时重新复制
+  COMMENT "Copying resources to output directory..."
+)
+
 # 创建一个目标，确保复制操作在编译前执行
 add_custom_target(
   copy_assets ALL
-  DEPENDS ${DEST_ASSETS_DIR}
+  DEPENDS ${DEST_ASSETS_DIR} ${DEST_RESOURCES_DIR}
 )
 
 # 生成可执行文件

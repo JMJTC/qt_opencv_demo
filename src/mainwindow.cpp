@@ -20,14 +20,19 @@ MainWindow::MainWindow(QWidget *parent)
     m_pFilterCombo->addItem("灰度");
     m_pFilterCombo->addItem("边缘检测");
     m_pFilterCombo->addItem("高斯模糊");
+    m_pFilterCombo->addItem("人脸检测");
+
+    // 设置人脸检测参数控件
+    setupFaceDetectionControls();
 
     mainLayout->addLayout(toolbar);
     mainLayout->addWidget(m_pDisplayLabel);
     mainLayout->addWidget(m_pSlider);
+    mainLayout->addWidget(m_pFaceDetectionGroup);
 
     setCentralWidget(central);
     setWindowTitle("Qt + OpenCV 图像/视频滤镜 Demo");
-    resize(800, 600);
+    resize(800, 700);
 
     m_pPlayButton->setEnabled(false);
     m_pSlider->setEnabled(false);
@@ -139,9 +144,15 @@ void MainWindow::onFilterChanged(int index)
     case 3:
         m_currentFilter = FilterType::Blur;
         break;
+    case 4:
+        m_currentFilter = FilterType::FaceDetection;
+        break;
     default:
         m_currentFilter = FilterType::None;
     }
+
+    // 显示/隐藏人脸检测参数控件
+    m_pFaceDetectionGroup->setVisible(m_currentFilter == FilterType::FaceDetection);
 
     if (m_currentMediaType == MediaType::Image && !m_currentImage.empty())
     {
@@ -150,6 +161,90 @@ void MainWindow::onFilterChanged(int index)
     else if (m_currentMediaType == MediaType::Video)
     {
         m_pPlayer->setFilter(m_currentFilter);
+    }
+}
+
+void MainWindow::setupFaceDetectionControls()
+{
+    m_pFaceDetectionGroup = new QGroupBox("人脸检测参数", this);
+    QVBoxLayout *faceLayout = new QVBoxLayout(m_pFaceDetectionGroup);
+    
+    // 缩放因子
+    QHBoxLayout *scaleLayout = new QHBoxLayout();
+    scaleLayout->addWidget(new QLabel("缩放因子:", this));
+    m_pScaleFactorSpin = new QDoubleSpinBox(this);
+    m_pScaleFactorSpin->setRange(1.01, 2.0);
+    m_pScaleFactorSpin->setSingleStep(0.01);
+    m_pScaleFactorSpin->setValue(1.1);
+    m_pScaleFactorSpin->setDecimals(2);
+    scaleLayout->addWidget(m_pScaleFactorSpin);
+    scaleLayout->addStretch();
+    faceLayout->addLayout(scaleLayout);
+    
+    // 最小邻居数
+    QHBoxLayout *neighborsLayout = new QHBoxLayout();
+    neighborsLayout->addWidget(new QLabel("最小邻居数:", this));
+    m_pMinNeighborsSpin = new QSpinBox(this);
+    m_pMinNeighborsSpin->setRange(1, 10);
+    m_pMinNeighborsSpin->setValue(3);
+    neighborsLayout->addWidget(m_pMinNeighborsSpin);
+    neighborsLayout->addStretch();
+    faceLayout->addLayout(neighborsLayout);
+    
+    // 最小尺寸
+    QHBoxLayout *minSizeLayout = new QHBoxLayout();
+    minSizeLayout->addWidget(new QLabel("最小尺寸:", this));
+    m_pMinSizeSpin = new QSpinBox(this);
+    m_pMinSizeSpin->setRange(10, 200);
+    m_pMinSizeSpin->setValue(30);
+    minSizeLayout->addWidget(m_pMinSizeSpin);
+    minSizeLayout->addStretch();
+    faceLayout->addLayout(minSizeLayout);
+    
+    // 最大尺寸
+    QHBoxLayout *maxSizeLayout = new QHBoxLayout();
+    maxSizeLayout->addWidget(new QLabel("最大尺寸:", this));
+    m_pMaxSizeSpin = new QSpinBox(this);
+    m_pMaxSizeSpin->setRange(50, 500);
+    m_pMaxSizeSpin->setValue(300);
+    maxSizeLayout->addWidget(m_pMaxSizeSpin);
+    maxSizeLayout->addStretch();
+    faceLayout->addLayout(maxSizeLayout);
+    
+    // 连接信号
+    connect(m_pScaleFactorSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged), 
+            this, &MainWindow::onFaceDetectionParamsChanged);
+    connect(m_pMinNeighborsSpin, QOverload<int>::of(&QSpinBox::valueChanged), 
+            this, &MainWindow::onFaceDetectionParamsChanged);
+    connect(m_pMinSizeSpin, QOverload<int>::of(&QSpinBox::valueChanged), 
+            this, &MainWindow::onFaceDetectionParamsChanged);
+    connect(m_pMaxSizeSpin, QOverload<int>::of(&QSpinBox::valueChanged), 
+            this, &MainWindow::onFaceDetectionParamsChanged);
+    
+    // 初始时隐藏人脸检测参数组
+    m_pFaceDetectionGroup->setVisible(false);
+}
+
+void MainWindow::updateFaceDetectionParams()
+{
+    if (m_currentFilter != FilterType::FaceDetection)
+        return;
+        
+    // 这里可以更新全局的人脸检测器参数
+    // 由于我们使用的是静态实例，参数会在检测时自动应用
+}
+
+void MainWindow::onFaceDetectionParamsChanged()
+{
+    if (m_currentFilter == FilterType::FaceDetection)
+    {
+        updateFaceDetectionParams();
+        
+        // 如果当前是图像模式，重新处理图像
+        if (m_currentMediaType == MediaType::Image && !m_currentImage.empty())
+        {
+            displayImage(ImageProcessor::applyFilter(m_currentImage, m_currentFilter));
+        }
     }
 }
 

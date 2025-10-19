@@ -3,13 +3,15 @@
 
 #include <opencv2/opencv.hpp>
 #include <string>
+#include "facedetector.h"
 
 enum class FilterType
 {
     None,
     Grayscale,
     Edge,
-    Blur
+    Blur,
+    FaceDetection
 };
 
 class ImageProcessor
