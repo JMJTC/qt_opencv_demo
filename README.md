@@ -36,22 +36,26 @@ qt_opencv_demo/
 ### 构建步骤
 
 1. 创建构建目录：
+
    ```bash
    mkdir build
    cd build
    ```
 
 2. 运行CMake生成构建文件：
+
    ```bash
    cmake ..
    ```
 
 3. 编译项目：
+
    ```bash
    make
    ```
 
 4. 运行程序：
+
    ```bash
    ./qt_opencv_demo
    ```
@@ -79,3 +83,7 @@ qt_opencv_demo/
 
 - 如果没有连接摄像头，程序会自动尝试播放assets/demo.mp4视频文件
 - 图像处理功能目前仅实现了灰度转换，可扩展更多功能
+
+## 参考资料
+
+- [WSL 下 GUI 程序标题栏中文问题解决方案](./WSL 下 GUI 程序标题栏中文问题解决方案.md)
