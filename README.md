@@ -89,3 +89,4 @@ qt_opencv_demo/
 - <https://docs.opencv.org/4.x/index.html>
 - [WSL 下 GUI 程序标题栏中文问题解决方案](./WSL 下 GUI 程序标题栏中文问题解决方案.md)
 - <https://www.runoob.com/opencv/cpp-opencv-basic.html>
+- <https://docs.opencv.ac.cn/4.12.0/d9/df8/tutorial_root.html>
