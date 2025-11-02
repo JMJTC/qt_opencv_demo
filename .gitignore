@@ -1,6 +1,7 @@
 # CMake 构建目录
 build/
 cmake-build-*/
+bin/
 
 # CMake生成的文件
 CMakeCache.txt
