@@ -13,6 +13,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     QHBoxLayout *toolbar = new QHBoxLayout();
     toolbar->addWidget(m_pOpenButton);
+    m_pCameraButton = new QPushButton("打开摄像头", this);
+    toolbar->addWidget(m_pCameraButton);
     toolbar->addWidget(m_pPlayButton);
     toolbar->addWidget(m_pFilterCombo);
 
@@ -39,6 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_pSlider->setRange(0, 1000); // 设置滑块的范围为0到1000
 
     connect(m_pOpenButton, &QPushButton::clicked, this, &MainWindow::openMedia);
+    connect(m_pCameraButton, &QPushButton::clicked, this, &MainWindow::openCamera);
     connect(m_pPlayButton, &QPushButton::clicked, this, &MainWindow::playPause);
     connect(m_pPlayer, &VideoPlayer::frameReady, this, &MainWindow::onFrameReady);
     connect(m_pPlayer, &VideoPlayer::positionChanged, this, &MainWindow::onPositionChanged);
@@ -86,6 +89,32 @@ void MainWindow::openMedia()
     {
         m_currentMediaType = MediaType::None;
         qWarning() << "无法加载媒体文件";
+    }
+}
+
+void MainWindow::openCamera()
+{
+    // 停止之前的媒体
+    m_pPlayer->stop();
+    m_isPlaying = false;
+    m_pPlayButton->setText("播放");
+
+    if (m_pPlayer->loadCamera(0))
+    {
+        m_currentMediaType = MediaType::Camera;
+        m_pPlayButton->setEnabled(true);
+        // 摄像头没有总帧数，不显示/使能滑块
+        m_pSlider->setEnabled(false);
+        // 自动开始播放摄像头
+        m_pPlayer->setFilter(m_currentFilter);
+        m_pPlayer->play();
+        m_isPlaying = true;
+        m_pPlayButton->setText("暂停");
+    }
+    else
+    {
+        m_currentMediaType = MediaType::None;
+        qWarning() << "无法打开摄像头";
     }
 }
 

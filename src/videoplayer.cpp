@@ -33,6 +33,26 @@ bool VideoPlayer::loadVideo(const QString &filePath)
     return true;
 }
 
+bool VideoPlayer::loadCamera(int index)
+{
+    QMutexLocker locker(&m_mutex);
+    if (m_cap.isOpened())
+        m_cap.release();
+
+    // 摄像头索引通常是 0，1 ...
+    if (!m_cap.open(index))
+    {
+        qWarning() << "无法打开摄像头:" << index;
+        return false;
+    }
+
+    // 摄像头通常没有正确的 FPS 或帧数信息，使用默认值
+    m_fps = 30;
+    // setPosition 对于摄像头可能没有作用（总帧数为0），但调用以保持一致性
+    setPosition(0.0);
+    return true;
+}
+
 void VideoPlayer::play()
 {
     if (!m_cap.isOpened())
@@ -65,7 +85,10 @@ void VideoPlayer::setPosition(double pos)
 {
     if (!m_cap.isOpened())
         return;
-    long total = m_cap.get(cv::CAP_PROP_FRAME_COUNT);
+    double total = m_cap.get(cv::CAP_PROP_FRAME_COUNT);
+    if (total <= 0)
+        return; // 对于摄像头或未知帧数不支持 setPosition
+
     long frame = static_cast<long>(total * pos);
     m_cap.set(cv::CAP_PROP_POS_FRAMES, frame);
     // 立即读取并显示该帧
@@ -114,6 +137,9 @@ void VideoPlayer::processFrame()
     QImage img(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888);
     emit frameReady(img.copy());
 
-    double pos = m_cap.get(cv::CAP_PROP_POS_FRAMES) / m_cap.get(cv::CAP_PROP_FRAME_COUNT);
+    double pos = 0.0;
+    double total = m_cap.get(cv::CAP_PROP_FRAME_COUNT);
+    if (total > 0)
+        pos = m_cap.get(cv::CAP_PROP_POS_FRAMES) / total;
     emit positionChanged(pos);
 }

@@ -15,6 +15,7 @@ class VideoPlayer : public QObject
     ~VideoPlayer();
 
     bool loadVideo(const QString &filePath);
+    bool loadCamera(int index = 0);
     void play();
     void pause();
     void stop();
@@ -36,6 +37,7 @@ class VideoPlayer : public QObject
     FilterType m_currentFilter{};
     int m_fps{};
     bool m_isPlaying{};
+    // 无需额外标志，VideoCapture 在摄像头模式下可能没有总帧数
 };
 
 #endif // _QTOPENCV_DEMO_VIDEOPLAYER_H_

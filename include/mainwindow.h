@@ -1,27 +1,28 @@
 #ifndef _QTOPENCV_DEMO_MAINWINDOW_H_
 #define _QTOPENCV_DEMO_MAINWINDOW_H_
 
+#include "facedetector.h"
 #include "imageprocessor.h"
 #include "videoplayer.h"
-#include "facedetector.h"
 #include <QComboBox>
+#include <QDoubleSpinBox>
+#include <QGroupBox>
 #include <QHBoxLayout>
 #include <QImage>
 #include <QLabel>
 #include <QMainWindow>
 #include <QPushButton>
 #include <QSlider>
-#include <QVBoxLayout>
 #include <QSpinBox>
-#include <QDoubleSpinBox>
-#include <QGroupBox>
+#include <QVBoxLayout>
 #include <opencv2/opencv.hpp>
 
 enum class MediaType
 {
     None,
     Image,
-    Video
+    Video,
+    Camera
 };
 
 class MainWindow : public QMainWindow
@@ -34,6 +35,7 @@ class MainWindow : public QMainWindow
 
   private slots:
     void openMedia();
+    void openCamera();
     void playPause();
     void onFrameReady(const QImage &frame);
     void onPositionChanged(double pos);
@@ -49,10 +51,11 @@ class MainWindow : public QMainWindow
     VideoPlayer *m_pPlayer = nullptr;
     QLabel *m_pDisplayLabel = nullptr;
     QPushButton *m_pOpenButton = nullptr;
+    QPushButton *m_pCameraButton = nullptr;
     QPushButton *m_pPlayButton = nullptr;
     QComboBox *m_pFilterCombo = nullptr;
     QSlider *m_pSlider = nullptr;
-    
+
     // 人脸检测参数控件
     QGroupBox *m_pFaceDetectionGroup = nullptr;
     QDoubleSpinBox *m_pScaleFactorSpin = nullptr;
