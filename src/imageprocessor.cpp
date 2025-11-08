@@ -1,5 +1,10 @@
 #include "imageprocessor.h"
 #include <QDebug>
+#include <QCoreApplication>
+#include <QDir>
+#include <QFile>
+#include <QString>
+#include <memory>
 
 cv::Mat ImageProcessor::applyFilter(const cv::Mat &input, FilterType type)
 {
@@ -22,18 +27,44 @@ cv::Mat ImageProcessor::applyFilter(const cv::Mat &input, FilterType type)
         break;
     case FilterType::FaceDetection:
         {
-            // 创建人脸检测器实例
-            static FaceDetector faceDetector("resources/models/haarcascade_frontalface_default.xml");
-            
-            if (!faceDetector.isLoaded())
+            // 创建人脸检测器实例（懒初始化），在多个可能的资源路径中查找模型文件，兼容不同工具链/IDE的工作目录差异
+            static std::unique_ptr<FaceDetector> faceDetector = []() -> std::unique_ptr<FaceDetector> {
+                QString appDir = QCoreApplication::applicationDirPath();
+                const QString filename = "haarcascade_frontalface_default.xml";
+                QStringList candidates;
+                // 常见的候选路径：可执行文件同级的 assets/resources、可执行文件上一级的 resources/assets、当前工作目录下的路径等
+                candidates << QDir(appDir).filePath("assets/models/" + filename)
+                           << QDir(appDir).filePath("resources/models/" + filename)
+                           << QDir(appDir).filePath("models/" + filename)
+                           << QDir(appDir).filePath(filename)
+                           << QDir(appDir).filePath("../resources/models/" + filename)
+                           << QDir(appDir).filePath("../assets/models/" + filename)
+                           << QDir::current().filePath("resources/models/" + filename)
+                           << QDir::current().filePath("assets/models/" + filename)
+                           ;
+
+                for (const QString &c : candidates) {
+                    if (QFile::exists(c)) {
+                        qDebug() << "Found face model at:" << c;
+                        return std::make_unique<FaceDetector>(c.toStdString());
+                    }
+                }
+
+                // 回退：尝试相对项目路径（保持向后兼容原来写法）
+                QString fallback = QDir(appDir).filePath("../resources/models/" + filename);
+                qWarning() << "未在候选路径中找到人脸模型，尝试回退路径：" << fallback;
+                return std::make_unique<FaceDetector>(fallback.toStdString());
+            }();
+
+            if (!faceDetector || !faceDetector->isLoaded())
             {
                 qWarning() << "人脸检测模型加载失败";
                 output = input.clone();
                 break;
             }
-            
+
             // 检测人脸
-            std::vector<cv::Rect> faces = faceDetector.detect(input);
+            std::vector<cv::Rect> faces = faceDetector->detect(input);
             
             // 复制原图像
             output = input.clone();
