@@ -43,8 +43,10 @@ cv::Mat ImageProcessor::applyFilter(const cv::Mat &input, FilterType type)
                            << QDir::current().filePath("assets/models/" + filename)
                            ;
 
-                for (const QString &c : candidates) {
-                    if (QFile::exists(c)) {
+                for (const QString &c : candidates) 
+                {
+                    if (QFile::exists(c)) 
+                    {
                         qDebug() << "Found face model at:" << c;
                         return std::make_unique<FaceDetector>(c.toStdString());
                     }
